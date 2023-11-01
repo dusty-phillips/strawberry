@@ -33,6 +33,7 @@ from strawberry.lazy_type import LazyType
 from strawberry.object_type import interface, type
 from strawberry.private import StrawberryPrivate
 from strawberry.relay.exceptions import NodeIDAnnotationError
+from strawberry.schema_directive import Location, schema_directive
 from strawberry.type import StrawberryContainer, get_object_definition
 from strawberry.types.info import Info  # noqa: TCH001
 from strawberry.types.types import StrawberryObjectDefinition
@@ -56,6 +57,28 @@ NodeIterableType: TypeAlias = Union[
 NodeType = TypeVar("NodeType", bound="Node")
 
 PREFIX = "arrayconnection"
+
+
+# Copied from federation.schema_directives to avoid depending on that module
+@dataclasses.dataclass
+class ImportedFrom:
+    name: str
+    url: str = "https://specs.apollo.dev/federation/v2.3"
+
+
+@schema_directive(
+    locations=[Location.FIELD_DEFINITION, Location.OBJECT],
+    name="federation__shareable",
+    repeatable=True,
+    print_definition=False,
+)
+class Shareable:
+    imported_from: ClassVar[ImportedFrom] = ImportedFrom(
+        name="shareable", url="https://specs.apollo.dev/federation/v2.3"
+    )
+# End copied code
+
+
 
 
 class GlobalIDValueError(ValueError):
@@ -635,16 +658,20 @@ class PageInfo:
     """
 
     has_next_page: bool = field(
+        directives=[Shareable()],
         description="When paginating forwards, are there more items?",
     )
     has_previous_page: bool = field(
+        directives=[Shareable()],
         description="When paginating backwards, are there more items?",
     )
     start_cursor: Optional[str] = field(
+        directives=[Shareable()],
         description="When paginating backwards, the cursor to continue.",
     )
     end_cursor: Optional[str] = field(
-        description="When paginating forwards, the cursor to continue.",
+        directives=[Shareable()],
+         description="When paginating forwards, the cursor to continue.",
     )
 
 
